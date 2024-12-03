@@ -7,14 +7,12 @@ from keras.layers import Dense, LSTM, Dropout
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 import streamlit as st
 
-# Ensure Kaggle API credentials are available
-os.environ['KAGGLE_CONFIG_DIR'] = os.getcwd()
-kaggle_json_path = os.path.join(os.getcwd(), 'kaggle.json')
+# Set Kaggle API credentials if required
+if "KAGGLE_USERNAME" in st.secrets and "KAGGLE_KEY" in st.secrets:
+    os.environ["KAGGLE_USERNAME"] = st.secrets["KAGGLE_USERNAME"]
+    os.environ["KAGGLE_KEY"] = st.secrets["KAGGLE_KEY"]
 
-if not os.path.exists(kaggle_json_path):
-    raise FileNotFoundError("Please upload your 'kaggle.json' file to the project directory.")
-
-# Download the dataset using Kaggle API
+# Download the dataset using Kaggle API if not already downloaded
 if not os.path.exists("seattle-weather.csv"):
     os.system("kaggle datasets download -d ananthr1/weather-prediction --unzip")
 
@@ -22,17 +20,6 @@ if not os.path.exists("seattle-weather.csv"):
 data = pd.read_csv('seattle-weather.csv')
 data.dropna(inplace=True)  # Remove missing values
 data['date'] = pd.to_datetime(data['date'])  # Convert date to datetime
-
-# Plot the data (optional visualizations)
-fig = px.line(data, x='date', y=['temp_max', 'temp_min'],
-              labels={'value': 'Temperature (°C)', 'date': 'Date'},
-              title='Daily Max and Min Temperatures')
-fig.show()
-
-weather_counts = data['weather'].value_counts().reset_index()
-weather_counts.columns = ['Weather Type', 'Count']
-fig = px.bar(weather_counts, x='Weather Type', y='Count', title='Weather Type Distribution')
-fig.show()
 
 # Prepare Data for Training
 training = data['temp_max'].values.reshape(-1, 1)
@@ -57,56 +44,28 @@ X_train = X_train.reshape(X_train.shape[0], X_train.shape[1], 1)
 X_val = X_val.reshape(X_val.shape[0], X_val.shape[1], 1)
 X_test = X_test.reshape(X_test.shape[0], X_test.shape[1], 1)
 
-# Define and Train LSTM Model
-model = Sequential([
-    LSTM(50, return_sequences=True, input_shape=(X_train.shape[1], 1)),
-    Dropout(0.2),
-    LSTM(50, return_sequences=True),
-    Dropout(0.2),
-    LSTM(50, return_sequences=True),
-    Dropout(0.2),
-    LSTM(50),
-    Dropout(0.2),
-    Dense(1)
-])
-model.compile(optimizer='adam', loss='mean_squared_error')
-model.fit(X_train, y_train, validation_data=(X_val, y_val), epochs=50, batch_size=32)
-model.save('lstm_weather_model.h5')
+# Define and Train LSTM Model if not already saved
+if not os.path.exists('lstm_weather_model.h5'):
+    model = Sequential([
+        LSTM(50, return_sequences=True, input_shape=(X_train.shape[1], 1)),
+        Dropout(0.2),
+        LSTM(50, return_sequences=True),
+        Dropout(0.2),
+        LSTM(50, return_sequences=True),
+        Dropout(0.2),
+        LSTM(50),
+        Dropout(0.2),
+        Dense(1)
+    ])
+    model.compile(optimizer='adam', loss='mean_squared_error')
+    model.fit(X_train, y_train, validation_data=(X_val, y_val), epochs=50, batch_size=32)
+    model.save('lstm_weather_model.h5')
 
-# Evaluate Metrics
-y_pred_val = model.predict(X_val).flatten()
-mae = mean_absolute_error(y_val, y_pred_val)
-rmse = np.sqrt(mean_squared_error(y_val, y_pred_val))
+# Load the trained model
+model = load_model('lstm_weather_model.h5')
 
 # Streamlit App Code
 st.set_page_config(page_title="Seattle Weather Predictor", page_icon="🌤️", layout="wide")
-
-# Custom CSS for UI styling
-st.markdown("""
-    <style>
-    .main {
-        background-color: #f7f9fc;
-        font-family: 'Arial', sans-serif;
-    }
-    h1, h2, h3, h4 {
-        color: #2c3e50;
-    }
-    .stButton button {
-        background-color: #3498db;
-        color: white;
-        border-radius: 5px;
-        padding: 8px 20px;
-        font-size: 16px;
-        margin: 10px 0px;
-    }
-    .stMetric {
-        font-weight: bold;
-    }
-    footer {
-        visibility: hidden;
-    }
-    </style>
-""", unsafe_allow_html=True)
 
 # Title Section
 st.title("🌤️ FutureTemp Weather Predictor")
@@ -167,5 +126,5 @@ if st.sidebar.button("🌡️ Predict Temperature"):
 # Footer Section
 st.markdown("""
     ---
-    Made with ❤️ by ** by Boss 👦🏻 Ice 🧊 Film 🎞️**  
+    Made with ❤️ by **by Boss 👦🏻 Ice 🧊 Film 🎞️**  
     """)
