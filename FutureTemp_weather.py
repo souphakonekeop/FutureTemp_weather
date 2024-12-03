@@ -1,5 +1,13 @@
 import subprocess
 import sys
+import os
+import pandas as pd
+import numpy as np
+import plotly.express as px
+from keras.models import Sequential, load_model
+from keras.layers import Dense, LSTM, Dropout
+from sklearn.metrics import mean_absolute_error, mean_squared_error
+import streamlit as st
 
 # Automatically install missing libraries
 required_libraries = [
@@ -14,19 +22,13 @@ required_libraries = [
 ]
 try:
     for library in required_libraries:
-        subprocess.check_call([sys.executable, "-m", "pip", "install", library])
-except subprocess.CalledProcessError as e:
-    print(f"Failed to install {library}. Error: {e}")
-
-# Import libraries
-import os
-import pandas as pd
-import numpy as np
-import plotly.express as px
-from keras.models import Sequential, load_model
-from keras.layers import Dense, LSTM, Dropout
-from sklearn.metrics import mean_absolute_error, mean_squared_error
-import streamlit as st
+        try:
+            subprocess.check_call([sys.executable, "-m", "pip", "install", library])
+        except subprocess.CalledProcessError:
+            print(f"Retrying installation for {library} with --user flag...")
+            subprocess.check_call([sys.executable, "-m", "pip", "install", library, "--user"])
+except Exception as e:
+    print(f"Failed to install packages: {e}")
 
 # Kaggle API setup
 os.environ["KAGGLE_CONFIG_DIR"] = os.getcwd()  # Ensure kaggle.json is in the current directory
