@@ -1,19 +1,11 @@
 import subprocess
 import sys
-import os
-import pandas as pd
-import numpy as np
-import plotly.express as px
-from keras.models import Sequential, load_model
-from keras.layers import Dense, LSTM, Dropout
-from sklearn.metrics import mean_absolute_error, mean_squared_error
-import streamlit as st
 
 # Automatically install missing packages
 required_libraries = [
-    "plotly",
-    "streamlit",
     "kaggle",
+    "streamlit",
+    "plotly",
     "pandas",
     "numpy",
     "keras",
@@ -25,6 +17,16 @@ for library in required_libraries:
         __import__(library)
     except ImportError:
         subprocess.check_call([sys.executable, "-m", "pip", "install", library])
+
+# Import libraries
+import os
+import pandas as pd
+import numpy as np
+import plotly.express as px
+from keras.models import Sequential, load_model
+from keras.layers import Dense, LSTM, Dropout
+from sklearn.metrics import mean_absolute_error, mean_squared_error
+import streamlit as st
 
 # Set Kaggle API credentials
 os.environ["KAGGLE_CONFIG_DIR"] = os.getcwd()  # Ensure your kaggle.json is in the current working directory
@@ -40,7 +42,7 @@ data = pd.read_csv(data_path)
 data.dropna(inplace=True)  # Remove missing values
 data['date'] = pd.to_datetime(data['date'])  # Convert date to datetime
 
-# Exploratory Data Analysis
+# Exploratory Data Analysis (optional for local testing)
 fig = px.line(data, x='date', y=['temp_max', 'temp_min'],
               labels={'value': 'Temperature (°C)', 'date': 'Date'},
               title='Daily Max and Min Temperatures')
