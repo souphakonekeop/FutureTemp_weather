@@ -1,5 +1,13 @@
 import subprocess
 import sys
+import os
+import pandas as pd
+import numpy as np
+import plotly.express as px
+from keras.models import Sequential, load_model
+from keras.layers import Dense, LSTM, Dropout
+from sklearn.metrics import mean_absolute_error, mean_squared_error
+import streamlit as st
 
 # Automatically install missing packages
 required_libraries = [
@@ -12,21 +20,11 @@ required_libraries = [
     "tensorflow",
     "scikit-learn",
 ]
-for library in required_libraries:
-    try:
-        __import__(library)
-    except ImportError:
+try:
+    for library in required_libraries:
         subprocess.check_call([sys.executable, "-m", "pip", "install", library])
-
-# Import libraries
-import os
-import pandas as pd
-import numpy as np
-import plotly.express as px
-from keras.models import Sequential, load_model
-from keras.layers import Dense, LSTM, Dropout
-from sklearn.metrics import mean_absolute_error, mean_squared_error
-import streamlit as st
+except subprocess.CalledProcessError as e:
+    print(f"Failed to install {library}. Error: {e}")
 
 # Set Kaggle API credentials
 os.environ["KAGGLE_CONFIG_DIR"] = os.getcwd()  # Ensure your kaggle.json is in the current working directory
@@ -41,17 +39,6 @@ data_path = './data/seattle-weather.csv'
 data = pd.read_csv(data_path)
 data.dropna(inplace=True)  # Remove missing values
 data['date'] = pd.to_datetime(data['date'])  # Convert date to datetime
-
-# Exploratory Data Analysis (optional for local testing)
-fig = px.line(data, x='date', y=['temp_max', 'temp_min'],
-              labels={'value': 'Temperature (°C)', 'date': 'Date'},
-              title='Daily Max and Min Temperatures')
-fig.show()
-
-weather_counts = data['weather'].value_counts().reset_index()
-weather_counts.columns = ['Weather Type', 'Count']
-fig = px.bar(weather_counts, x='Weather Type', y='Count', title='Weather Type Distribution')
-fig.show()
 
 # Data Preprocessing
 training = data['temp_max'].values.reshape(-1, 1)
