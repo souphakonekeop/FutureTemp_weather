@@ -1,18 +1,22 @@
-# Install required libraries
-!pip install -q kagglehub streamlit pyngrok pandas matplotlib plotly seaborn tensorflow
-
-import kagglehub
+import os
 import pandas as pd
 import numpy as np
 import plotly.express as px
 from keras.models import Sequential, load_model
 from keras.layers import Dense, LSTM, Dropout
 from sklearn.metrics import mean_absolute_error, mean_squared_error
+import streamlit as st
 
-# Download and load dataset
-path = kagglehub.dataset_download("ananthr1/weather-prediction")
-data_path = path + '/seattle-weather.csv'
+# Set Kaggle API credentials
+os.environ["KAGGLE_CONFIG_DIR"] = os.getcwd()  # Ensure your kaggle.json is in the current working directory
 
+# Download dataset using Kaggle API
+if not os.path.exists('./data/seattle-weather.csv'):
+    os.makedirs('./data', exist_ok=True)
+    os.system('kaggle datasets download -d ananthr1/weather-prediction --unzip -p ./data')
+
+# Load dataset
+data_path = './data/seattle-weather.csv'
 data = pd.read_csv(data_path)
 data.dropna(inplace=True)  # Remove missing values
 data['date'] = pd.to_datetime(data['date'])  # Convert date to datetime
@@ -74,8 +78,6 @@ print(f"Validation MAE: {mae:.2f} °C")
 print(f"Validation RMSE: {rmse:.2f} °C")
 
 # Streamlit Application
-import streamlit as st
-
 # Streamlit Configuration
 st.set_page_config(page_title="FutureTemp Weather Predictor", page_icon="🌤️", layout="wide")
 
