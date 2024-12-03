@@ -1,4 +1,5 @@
 import subprocess
+import sys
 import os
 import pandas as pd
 import numpy as np
@@ -8,22 +9,22 @@ from keras.layers import Dense, LSTM, Dropout
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 import streamlit as st
 
-# Install required libraries
+# Automatically install missing packages
 required_libraries = [
-    "kagglehub",
-    "streamlit",
-    "pyngrok",
-    "pandas",
-    "matplotlib",
     "plotly",
-    "seaborn",
-    "tensorflow",
+    "streamlit",
+    "kaggle",
+    "pandas",
+    "numpy",
     "keras",
+    "tensorflow",
     "scikit-learn",
 ]
-
 for library in required_libraries:
-    subprocess.check_call(["pip", "install", library])
+    try:
+        __import__(library)
+    except ImportError:
+        subprocess.check_call([sys.executable, "-m", "pip", "install", library])
 
 # Set Kaggle API credentials
 os.environ["KAGGLE_CONFIG_DIR"] = os.getcwd()  # Ensure your kaggle.json is in the current working directory
