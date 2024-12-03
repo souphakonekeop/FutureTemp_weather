@@ -1,5 +1,4 @@
-# Install required libraries
-import kagglehub
+import os
 import pandas as pd
 import numpy as np
 import plotly.express as px
@@ -8,12 +7,19 @@ from keras.layers import Dense, LSTM, Dropout
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 import streamlit as st
 
-# Download the dataset
-path = kagglehub.dataset_download("ananthr1/weather-prediction")
-data_path = path + '/seattle-weather.csv'
+# Ensure Kaggle API credentials are available
+os.environ['KAGGLE_CONFIG_DIR'] = os.getcwd()
+kaggle_json_path = os.path.join(os.getcwd(), 'kaggle.json')
+
+if not os.path.exists(kaggle_json_path):
+    raise FileNotFoundError("Please upload your 'kaggle.json' file to the project directory.")
+
+# Download the dataset using Kaggle API
+if not os.path.exists("seattle-weather.csv"):
+    os.system("kaggle datasets download -d ananthr1/weather-prediction --unzip")
 
 # Load the dataset
-data = pd.read_csv(data_path)
+data = pd.read_csv('seattle-weather.csv')
 data.dropna(inplace=True)  # Remove missing values
 data['date'] = pd.to_datetime(data['date'])  # Convert date to datetime
 
