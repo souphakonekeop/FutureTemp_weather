@@ -1,3 +1,24 @@
+import subprocess
+import sys
+
+# Automatically install missing libraries
+required_libraries = [
+    "kaggle",
+    "streamlit",
+    "plotly",
+    "pandas",
+    "numpy",
+    "keras",
+    "tensorflow",
+    "scikit-learn",
+]
+try:
+    for library in required_libraries:
+        subprocess.check_call([sys.executable, "-m", "pip", "install", library, "--user"])
+except Exception as e:
+    print(f"Error installing packages: {e}")
+
+# Import libraries after ensuring they are installed
 import os
 import pandas as pd
 import numpy as np
