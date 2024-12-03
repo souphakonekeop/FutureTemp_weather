@@ -1,8 +1,6 @@
 # Install required libraries
-import os
-os.system("pip install -q kagglehub streamlit pyngrok pandas matplotlib plotly seaborn tensorflow")
+!pip install -q kagglehub streamlit pyngrok pandas matplotlib plotly seaborn tensorflow
 
-# Import required libraries
 import kagglehub
 import pandas as pd
 import numpy as np
@@ -10,32 +8,29 @@ import plotly.express as px
 from keras.models import Sequential, load_model
 from keras.layers import Dense, LSTM, Dropout
 from sklearn.metrics import mean_absolute_error, mean_squared_error
-import streamlit as st
 
-# Download the dataset
+# Download and load dataset
 path = kagglehub.dataset_download("ananthr1/weather-prediction")
 data_path = path + '/seattle-weather.csv'
 
-# Load the dataset
 data = pd.read_csv(data_path)
 data.dropna(inplace=True)  # Remove missing values
 data['date'] = pd.to_datetime(data['date'])  # Convert date to datetime
 
 # Exploratory Data Analysis
-# Line plot for temperatures
-fig1 = px.line(data, x='date', y=['temp_max', 'temp_min'],
-               labels={'value': 'Temperature (°C)', 'date': 'Date'},
-               title='Daily Max and Min Temperatures')
+fig = px.line(data, x='date', y=['temp_max', 'temp_min'],
+              labels={'value': 'Temperature (°C)', 'date': 'Date'},
+              title='Daily Max and Min Temperatures')
+fig.show()
 
-# Weather type distribution
 weather_counts = data['weather'].value_counts().reset_index()
 weather_counts.columns = ['Weather Type', 'Count']
-fig2 = px.bar(weather_counts, x='Weather Type', y='Count', title='Weather Type Distribution')
+fig = px.bar(weather_counts, x='Weather Type', y='Count', title='Weather Type Distribution')
+fig.show()
 
 # Data Preprocessing
 training = data['temp_max'].values.reshape(-1, 1)
 
-# Sliding window function
 def df_to_XY(data, window_size=10):
     X, y = [], []
     for i in range(window_size, len(data)):
@@ -46,17 +41,15 @@ def df_to_XY(data, window_size=10):
 WINDOW_SIZE = 10
 X, y = df_to_XY(training, WINDOW_SIZE)
 
-# Train-validation-test split
 X_train, y_train = X[:800], y[:800]
 X_val, y_val = X[800:1000], y[800:1000]
 X_test, y_test = X[1000:], y[1000:]
 
-# Reshape for LSTM
 X_train = X_train.reshape(X_train.shape[0], X_train.shape[1], 1)
 X_val = X_val.reshape(X_val.shape[0], X_val.shape[1], 1)
 X_test = X_test.reshape(X_test.shape[0], X_test.shape[1], 1)
 
-# Define the LSTM Model
+# Define and Train the Model
 model = Sequential([
     LSTM(50, return_sequences=True, input_shape=(X_train.shape[1], 1)),
     Dropout(0.2),
@@ -69,25 +62,24 @@ model = Sequential([
     Dense(1)
 ])
 
-# Compile and train the model
 model.compile(optimizer='adam', loss='mean_squared_error')
 history = model.fit(X_train, y_train, validation_data=(X_val, y_val), epochs=50, batch_size=32)
-
-# Save the model
 model.save('lstm_weather_model.h5')
 
-# Predict on validation and test sets
+# Validation Metrics
 y_pred_val = model.predict(X_val).flatten()
-y_pred_test = model.predict(X_test).flatten()
-
-# Calculate MAE and RMSE
 mae = mean_absolute_error(y_val, y_pred_val)
 rmse = np.sqrt(mean_squared_error(y_val, y_pred_val))
+print(f"Validation MAE: {mae:.2f} °C")
+print(f"Validation RMSE: {rmse:.2f} °C")
 
-# Streamlit App
+# Streamlit Application
+import streamlit as st
+
+# Streamlit Configuration
 st.set_page_config(page_title="FutureTemp Weather Predictor", page_icon="🌤️", layout="wide")
 
-# Custom CSS
+# Custom CSS for UI styling
 st.markdown("""
     <style>
     .main {
@@ -134,7 +126,7 @@ if st.sidebar.button("🌡️ Predict Temperature"):
     input_data = np.array(inputs).reshape(1, -1, 1)
     prediction = model.predict(input_data)[0][0]
 
-    # Simulate actual temperature for metrics
+    # Simulate actual temperature for metrics (replace with real data if available)
     actual_temp = [input_data[0, -1, 0] + np.random.uniform(-2, 2)]
 
     # Calculate Metrics
@@ -142,7 +134,7 @@ if st.sidebar.button("🌡️ Predict Temperature"):
     rmse = np.sqrt(mean_squared_error(actual_temp, [prediction]))
     accuracy = 100 - (abs(actual_temp[0] - prediction) / abs(actual_temp[0]) * 100)
 
-    # Results Display
+    # Result Cards
     st.markdown("## 📊 Results")
     st.success(f"🌡️ **Predicted Temperature**: {prediction:.2f} °C")
     st.info(f"📏 **Simulated Actual Temperature**: {actual_temp[0]:.2f} °C")
@@ -173,5 +165,5 @@ if st.sidebar.button("🌡️ Predict Temperature"):
 # Footer Section
 st.markdown("""
     ---
-    Made with ❤️ by **Boss 👦🏻 Ice 🧊 Film 🎞️**
+    Made with ❤️ by **Boss 👦🏻 Ice 🧊 Film 🎞️**  
 """)
